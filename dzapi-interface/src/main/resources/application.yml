@@ -1,0 +1,8 @@
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+dzapi:
+  client:
+    access-key: dazhou
+    secret-key: abcdefgh
