@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @author csw
  */
 @Data
-public class RequestParamsRemarkVO implements Serializable {
+public class RequestRemarkVO implements Serializable {
 
     private static final long serialVersionUID = -6549477882078242340L;
     /**

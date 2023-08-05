@@ -1,8 +1,8 @@
 package com.dzapicommon.entity.service.model.dto.interfaceinfo;
 
 
-import com.dzapicommon.entity.service.model.vo.RequestParamsRemarkVO;
-import com.dzapicommon.entity.service.model.vo.ResponseParamsRemarkVO;
+import com.dzapicommon.entity.service.model.vo.RequestRemarkVO;
+import com.dzapicommon.entity.service.model.vo.ResponseRemarkVO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -38,11 +38,11 @@ public class InterfaceInfoAddRequest implements Serializable {
     /**
      * 请求参数说明
      */
-    private List<RequestParamsRemarkVO> requestParamsRemark;
+    private List<RequestRemarkVO> requestParamsRemark;
     /**
      * 响应参数说明
      */
-    private List<ResponseParamsRemarkVO> responseParamsRemark;
+    private List<ResponseRemarkVO> responseParamsRemark;
     /**
      * 请求头
      */

@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 接口信息视图
+ * 接口信息vo
  *
  */
 @Data
@@ -53,12 +53,12 @@ public class InterfaceInfoVO implements Serializable {
     /**
      * 请求参数说明
      */
-    private List<RequestParamsRemarkVO> requestParamsRemark;
+    private List<RequestRemarkVO> requestParamsRemark;
 
     /**
      * 响应参数说明
      */
-    private List<ResponseParamsRemarkVO> responseParamsRemark;
+    private List<ResponseRemarkVO> responseParamsRemark;
 
     /**
      * 请求头

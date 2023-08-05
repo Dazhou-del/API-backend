@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author csw
  */
 @Data
-public class ResponseParamsRemarkVO implements Serializable {
+public class ResponseRemarkVO implements Serializable {
     private static final long serialVersionUID = 3673526667928077840L;
     /**
      * id
