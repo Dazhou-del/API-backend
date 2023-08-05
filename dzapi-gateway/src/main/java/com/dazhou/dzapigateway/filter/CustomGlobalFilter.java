@@ -1,12 +1,13 @@
 package com.dazhou.dzapigateway.filter;
 
 import com.dazhou.dazhouclientsdk.util.SignUtils;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
-import com.dzapicommon.entity.model.entity.User;
-import com.dzapicommon.entity.model.entity.UserInterfaceInfo;
+
 import com.dzapicommon.entity.service.InnerInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserService;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
+import com.dzapicommon.entity.service.model.entity.User;
+import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.reactivestreams.Publisher;
@@ -88,7 +89,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
             return handleNotAuth(response);
         }
 
-        if (Long.parseLong(nonce) > 10000) {
+        if (Long.parseLong(nonce) > 100000000) {
             return handleNotAuth(response);
         }
         //不超过5分钟
@@ -114,7 +115,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (interfaceInfo==null){
             return handleNotAuth(response);
         }
-        //todo 是否还有调用次数
+        // 是否还有调用次数
         Long interfaceInfoId = interfaceInfo.getId();
         Long userId = invokeUser.getId();
         UserInterfaceInfo userInterfaceInfo = innerUserInterfaceInfoService.getLeftNum(interfaceInfoId, userId);

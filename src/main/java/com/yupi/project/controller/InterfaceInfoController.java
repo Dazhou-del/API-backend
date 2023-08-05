@@ -1,13 +1,14 @@
 package com.yupi.project.controller;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dazhou.dazhouclientsdk.client.RzApiClient;
 import com.dzapicommon.common.*;
 
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoAddRequest;
-import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoInvokeRequest;
+import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoExecuteRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
 import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
@@ -15,6 +16,7 @@ import com.dzapicommon.entity.service.model.entity.User;
 import com.dzapicommon.entity.service.model.enums.InterfaceInfoStatusEnum;
 import com.dzapicommon.entity.service.model.vo.InterfaceInfoVO;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.yupi.project.annotation.AuthCheck;
 
 import com.yupi.project.constant.CommonConstant;
@@ -30,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 /**
  * 接口管理
@@ -50,7 +51,6 @@ public class InterfaceInfoController {
     @Resource
     private RzApiClient rzApiClient;
 
-    // region 增删改查
 
     /**
      * 创建
@@ -68,6 +68,7 @@ public class InterfaceInfoController {
         BeanUtils.copyProperties(interfaceInfoAddRequest, interfaceInfo);
         // 校验
         interfaceInfoService.validInterfaceInfo(interfaceInfo, true);
+        //获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         interfaceInfo.setUserId(loginUser.getId());
         interfaceInfo.setRequestParamsRemark(JSONUtil.toJsonStr(interfaceInfoAddRequest.getRequestParamsRemark()));
@@ -76,6 +77,7 @@ public class InterfaceInfoController {
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
+        //保存之后 InterfaceInfo就已经分配好id了
         long newInterfaceInfoId = interfaceInfo.getId();
         return ResultUtils.success(newInterfaceInfoId);
     }
@@ -144,7 +146,7 @@ public class InterfaceInfoController {
 
 
     /**
-     * 分页获取列表（封装类）
+     * 分页获取列表
      *
      * @param interfaceInfoQueryRequest
      * @param request
@@ -157,23 +159,26 @@ public class InterfaceInfoController {
         }
         InterfaceInfo interfaceInfoQuery = new InterfaceInfo();
         BeanUtils.copyProperties(interfaceInfoQueryRequest, interfaceInfoQuery);
+        //获取当前页号和页面大小
         long current = interfaceInfoQueryRequest.getCurrent();
         long size = interfaceInfoQueryRequest.getPageSize();
+        //排序字段和排序顺序
         String sortField = interfaceInfoQueryRequest.getSortField();
         String sortOrder = interfaceInfoQueryRequest.getSortOrder();
         String description = interfaceInfoQuery.getDescription();
-        // content 需支持模糊搜索
+        // description 需支持模糊搜索
         interfaceInfoQuery.setDescription(null);
         // 限制爬虫
-        if (size > 50) {
+        if (size > 30) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>(interfaceInfoQuery);
-        queryWrapper.like(StringUtils.isNotBlank(description), "description", description);
+      QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>();
+        //模糊搜索description
+
+        queryWrapper.like(StringUtils.isNotBlank(description),"description", description);
         queryWrapper.orderBy(StringUtils.isNotBlank(sortField),
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size), queryWrapper);
-//        转化成InterfaceInfovo对象
         return ResultUtils.success(interfaceInfoPage);
     }
 
@@ -228,37 +233,54 @@ public class InterfaceInfoController {
     /**
      * 发布
      *只有管理才能操作
-     * @param idRequest
+     * @param interfaceInfoInvokeRequest
      * @param request
      * @return
      */
     @PostMapping("/online")
     @AuthCheck(mustRole = "admin")
-    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest,
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody InterfaceInfoExecuteRequest interfaceInfoInvokeRequest,
                                                      HttpServletRequest request) {
-        //判断参数是否存在
-        if(idRequest==null ||idRequest.getId()<=0){
+        if (interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        //判断接口是否存在
-        long id = idRequest.getId();
+        // 判断接口是否存在
+        Long id = interfaceInfoInvokeRequest.getId();
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
-        if (oldInterfaceInfo == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldInterfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
+        // 判断是否可以调用
+        String requestParams = interfaceInfoInvokeRequest.getRequestParams();
+        // 接口请求地址
+        String url = oldInterfaceInfo.getUrl();
+        String method = oldInterfaceInfo.getMethod();
+        String host = oldInterfaceInfo.getHost();
+        // 获取SDK客户端
+        //查询用户的accessKey,secretKey
+        User loginUser = userService.getLoginUser(request);
+        String accessKey = loginUser.getAccessKey();
+        String secretKey = loginUser.getSecretKey();
+        RzApiClient rzApiClient = new RzApiClient(accessKey, secretKey);
+        rzApiClient.setGatewayHost(host);
+        // 设置网关地址
+        try {
+            // 执行方法
+            String invokeResult = rzApiClient.executeApi(requestParams, url, method);
+            if (StringUtils.isBlank(invokeResult)) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口数据为空");
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
         }
-        //判断接口是否可以被调用
-        com.dazhou.dazhouclientsdk.model.User user=new com.dazhou.dazhouclientsdk.model.User();
-        user.setUsername("ssw");
-        String username = rzApiClient.getUserNameByPost(user);
-        if (StringUtils.isBlank(username)){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口验证失败");
-        }
-        //修改状态
+
+        // 修改接口状态为 上线状态
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         interfaceInfo.setId(id);
         interfaceInfo.setStatus(InterfaceInfoStatusEnum.ONLINE.getValue());
         boolean result = interfaceInfoService.updateById(interfaceInfo);
         return ResultUtils.success(result);
+
+
+     
     }
     /**
      * 下线
@@ -298,7 +320,7 @@ public class InterfaceInfoController {
      * @return
      */
     @PostMapping("/invoke")
-    public BaseResponse<Object> invokeInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,
+    public BaseResponse<Object> invokeInterfaceInfo(@RequestBody InterfaceInfoExecuteRequest interfaceInfoInvokeRequest,
                                                       HttpServletRequest request) {
         //判断参数是否存在
         if(interfaceInfoInvokeRequest==null ||interfaceInfoInvokeRequest.getId()<=0){
@@ -309,6 +331,10 @@ public class InterfaceInfoController {
         String userRequestParams = interfaceInfoInvokeRequest.getRequestParams();
         //判断这个id的数据是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
+        //从数据库中查询出host,url,method
+        String host = oldInterfaceInfo.getHost();
+        String url = oldInterfaceInfo.getUrl();
+        String method = oldInterfaceInfo.getMethod();
         if (oldInterfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -321,10 +347,14 @@ public class InterfaceInfoController {
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
         RzApiClient tempClient = new RzApiClient(accessKey, secretKey);
-        Gson gson = new Gson();
-        com.dazhou.dazhouclientsdk.model.User user = gson.fromJson(userRequestParams, com.dazhou.dazhouclientsdk.model.User.class);
+        tempClient.setGatewayHost(host);
         //调用客户端
-        String userNameByPost = tempClient.getUserNameByPost(user);
-        return ResultUtils.success(userNameByPost);
+        String result = tempClient.executeApi(userRequestParams,url,method);
+        if (result==null){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"接口参数不对调用失败");
+        }
+        return ResultUtils.success(result);
     }
+
+
 }

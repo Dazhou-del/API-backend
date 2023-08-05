@@ -64,11 +64,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         Long id = interfaceInfo.getId();
         //接口名称
         String name = interfaceInfo.getName();
-        String description = interfaceInfo.getDescription();
         String url = interfaceInfo.getUrl();
-        String requestHeader = interfaceInfo.getRequestHeader();
-        String responseHeader = interfaceInfo.getResponseHeader();
-        Integer status = interfaceInfo.getStatus();
         String method = interfaceInfo.getMethod();
         //创建人id
         Long userId = interfaceInfo.getUserId();
@@ -81,8 +77,17 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
                 throw new BusinessException(ErrorCode.PARAMS_ERROR);
             }
         }
+        if (add) {
+            if (StringUtils.isAnyBlank(url)) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            }
+        }
+        if (add) {
+            if (StringUtils.isAnyBlank(method)) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            }
+        }
         //如果接口名称不为空且长度>50,抛出参数错误的异常，错误信息为名称过长
-        //本期写成<50(没有解决)，第二期视频中解决了。
         if (StringUtils.isNotBlank(name) && name.length() > 50) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "内容过长");
         }
@@ -128,13 +133,21 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         return queryWrapper;
     }
 
+    /**
+     * 把 interfaceInfo对象转为InterfaceInfoVO对象
+     * @param interfaceInfo
+     * @param request
+     * @return
+     */
     @Override
     public InterfaceInfoVO getInterfaceInfoVO(InterfaceInfo interfaceInfo, HttpServletRequest request) {
         InterfaceInfoVO interfaceInfoVO = InterfaceInfoVO.objToVo(interfaceInfo);
         // 1. 关联查询用户信息
         Long userId = interfaceInfo.getUserId();
+        //判断用户
         User user = null;
         if (userId != null && userId > 0) {
+//            根据userId查询出user对象
             user = userService.getById(userId);
         }
         UserVO userVO = userService.getUserVO(user);
@@ -252,13 +265,13 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         long id = interfaceInfoUpdateRequest.getId();
         // 判断是否存在
         InterfaceInfo oldInterfaceInfo = this.getById(id);
+        //如果等于空则抛出错误
         ThrowUtils.throwIf(oldInterfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
 
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         BeanUtils.copyProperties(interfaceInfoUpdateRequest, interfaceInfo);
         interfaceInfo.setRequestParamsRemark(JSONUtil.toJsonStr(interfaceInfoUpdateRequest.getRequestParamsRemark()));
         interfaceInfo.setResponseParamsRemark(JSONUtil.toJsonStr(interfaceInfoUpdateRequest.getResponseParamsRemark()));
-
         // 参数校验
         this.validInterfaceInfo(interfaceInfo, false);
         return this.updateById(interfaceInfo);

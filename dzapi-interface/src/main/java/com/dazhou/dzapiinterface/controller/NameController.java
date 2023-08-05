@@ -25,7 +25,7 @@ public class NameController {
     }
 
     @PostMapping("/user")
-    public String getUsernameByPost(@RequestBody User user, HttpServletRequest request) {
+    public String getUsernameByPost(@RequestBody User user ) {
         String result="Post 用户名字是"+user.getUsername();
         return result;
     }
