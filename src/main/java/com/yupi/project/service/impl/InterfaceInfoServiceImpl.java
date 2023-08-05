@@ -1,8 +1,9 @@
 package com.yupi.project.service.impl;
 
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
-import com.yupi.project.common.ErrorCode;
+import com.dzapicommon.common.ErrorCode;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.yupi.project.exception.BusinessException;
 import com.yupi.project.mapper.InterfaceInfoMapper;
 import com.yupi.project.service.InterfaceInfoService;
@@ -45,7 +46,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         Long userId = interfaceInfo.getUserId();
         Date createTime = interfaceInfo.getCreateTime();
         Date updateTime = interfaceInfo.getUpdateTime();
-        Integer isDeleted = interfaceInfo.getIsDeleted();
+        Integer isDeleted = interfaceInfo.getIsDelete();
         // 如果是添加时，所有参数必须非空,否者会抛出参数错误的异常
         if (add) {
             if (StringUtils.isAnyBlank(name)) {

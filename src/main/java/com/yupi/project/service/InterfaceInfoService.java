@@ -2,7 +2,7 @@ package com.yupi.project.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 
 /**
 * @author da zhou

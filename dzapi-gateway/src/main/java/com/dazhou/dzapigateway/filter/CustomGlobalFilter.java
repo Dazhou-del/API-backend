@@ -3,6 +3,7 @@ package com.dazhou.dzapigateway.filter;
 import com.dazhou.dazhouclientsdk.util.SignUtils;
 import com.dzapicommon.entity.model.entity.InterfaceInfo;
 import com.dzapicommon.entity.model.entity.User;
+import com.dzapicommon.entity.model.entity.UserInterfaceInfo;
 import com.dzapicommon.entity.service.InnerInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserService;
@@ -114,8 +115,16 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
             return handleNotAuth(response);
         }
         //todo 是否还有调用次数
+        Long interfaceInfoId = interfaceInfo.getId();
+        Long userId = invokeUser.getId();
+        UserInterfaceInfo userInterfaceInfo = innerUserInterfaceInfoService.getLeftNum(interfaceInfoId, userId);
+        Integer leftNum = userInterfaceInfo.getLeftNum();
+        if (leftNum.intValue()<=0){
+            log.error("没有调用次数了");
+            return response.setComplete();
+        }
         //7.请求转发，调用模拟接口+响应日志
-        return handleResponse(exchange, chain,interfaceInfo.getId(),invokeUser.getId());
+        return handleResponse(exchange, chain,interfaceInfoId,userId);
 
     }
 

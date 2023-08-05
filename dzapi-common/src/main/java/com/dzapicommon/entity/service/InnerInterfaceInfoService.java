@@ -1,7 +1,7 @@
 package com.dzapicommon.entity.service;
 
 
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 
 /**
 * @author da zhou
@@ -11,7 +11,7 @@ import com.dzapicommon.entity.model.entity.InterfaceInfo;
 public interface InnerInterfaceInfoService {
 
     //2.从数据库中查询模拟接口，是否存在(请求路径，请求方法，请求参数，布尔)
-    InterfaceInfo getInterfaceInfo(String path,String method);
+    InterfaceInfo getInterfaceInfo(String path, String method);
 
 
 }

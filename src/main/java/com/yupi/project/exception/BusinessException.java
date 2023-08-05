@@ -1,6 +1,6 @@
 package com.yupi.project.exception;
 
-import com.yupi.project.common.ErrorCode;
+import com.dzapicommon.common.ErrorCode;
 
 /**
  * 自定义异常类
@@ -25,6 +25,7 @@ public class BusinessException extends RuntimeException {
         super(message);
         this.code = errorCode.getCode();
     }
+
 
     public int getCode() {
         return code;

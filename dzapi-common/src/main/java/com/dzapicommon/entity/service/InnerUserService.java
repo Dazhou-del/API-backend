@@ -1,8 +1,7 @@
 package com.dzapicommon.entity.service;
 
 
-import com.dzapicommon.entity.model.entity.User;
-
+import com.dzapicommon.entity.service.model.entity.User;
 
 /**
  * 用户服务

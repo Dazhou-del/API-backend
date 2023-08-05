@@ -1,6 +1,7 @@
 package com.yupi.project.service;
 
-import com.dzapicommon.entity.model.entity.User;
+
+import com.dzapicommon.entity.service.model.entity.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

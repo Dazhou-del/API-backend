@@ -1,9 +1,11 @@
 package com.yupi.project.service.inner;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
+import com.dzapicommon.common.ErrorCode;
+
 import com.dzapicommon.entity.service.InnerInterfaceInfoService;
-import com.yupi.project.common.ErrorCode;
+
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.yupi.project.exception.BusinessException;
 import com.yupi.project.mapper.InterfaceInfoMapper;
 import org.apache.commons.lang3.StringUtils;

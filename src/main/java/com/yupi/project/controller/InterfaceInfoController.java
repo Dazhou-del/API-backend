@@ -3,18 +3,21 @@ package com.yupi.project.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dazhou.dazhouclientsdk.client.RzApiClient;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
-import com.dzapicommon.entity.model.entity.User;
+import com.dzapicommon.common.*;
+
+import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoAddRequest;
+import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoInvokeRequest;
+import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
+import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
+import com.dzapicommon.entity.service.model.entity.User;
+import com.dzapicommon.entity.service.model.enums.InterfaceInfoStatusEnum;
 import com.google.gson.Gson;
 import com.yupi.project.annotation.AuthCheck;
-import com.yupi.project.common.*;
+
 import com.yupi.project.constant.CommonConstant;
 import com.yupi.project.exception.BusinessException;
-import com.yupi.project.model.dto.interfaceInfo.InterfaceInfoAddRequest;
-import com.yupi.project.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
-import com.yupi.project.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
-import com.yupi.project.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
-import com.yupi.project.model.enums.InterfaceInfoStatusEnum;
+
 import com.yupi.project.service.InterfaceInfoService;
 import com.yupi.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -280,7 +283,7 @@ public class InterfaceInfoController {
         }
         //判断接口是否存在
         long id = interfaceInfoInvokeRequest.getId();
-        String userRequestParams = interfaceInfoInvokeRequest.getUserRequestParams();
+        String userRequestParams = interfaceInfoInvokeRequest.getRequestParams();
         //判断这个id的数据是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         if (oldInterfaceInfo == null) {

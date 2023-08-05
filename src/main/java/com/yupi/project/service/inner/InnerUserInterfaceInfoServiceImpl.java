@@ -2,6 +2,7 @@ package com.yupi.project.service.inner;
 
 
 import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
+import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
 import com.yupi.project.service.UserInterfaceInfoService;
 import org.apache.dubbo.config.annotation.DubboService;
 
@@ -25,6 +26,17 @@ public class InnerUserInterfaceInfoServiceImpl implements InnerUserInterfaceInfo
     @Override
     public boolean invokeCount(long interfaceInfoId, long userId) {
         return userInterfaceInfoService.invokeCount(interfaceInfoId,userId);
+    }
+
+    /**
+     * 查询剩余次数
+     * @param interfaceInfoId
+     * @param userId
+     * @return
+     */
+    @Override
+    public UserInterfaceInfo getLeftNum(long interfaceInfoId, long userId) {
+        return userInterfaceInfoService.getLeftNum(interfaceInfoId,userId);
     }
 
 }

@@ -1,8 +1,9 @@
 package com.yupi.project.aop;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.dzapicommon.entity.model.entity.User;
-import com.yupi.project.common.ErrorCode;
+
+import com.dzapicommon.common.ErrorCode;
+import com.dzapicommon.entity.service.model.entity.User;
 import com.yupi.project.exception.BusinessException;
 import com.yupi.project.service.UserService;
 import com.yupi.project.annotation.AuthCheck;

@@ -1,8 +1,9 @@
 package com.yupi.project.exception;
 
-import com.yupi.project.common.ErrorCode;
-import com.yupi.project.common.ResultUtils;
-import com.yupi.project.common.BaseResponse;
+
+import com.dzapicommon.common.BaseResponse;
+import com.dzapicommon.common.ErrorCode;
+import com.dzapicommon.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

@@ -2,23 +2,22 @@ package com.yupi.project.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.dzapicommon.entity.model.entity.User;
-import com.dzapicommon.entity.model.entity.UserInterfaceInfo;
+import com.dzapicommon.common.BaseResponse;
+import com.dzapicommon.common.DeleteRequest;
+import com.dzapicommon.common.ErrorCode;
+import com.dzapicommon.common.ResultUtils;
+import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoAddRequest;
+import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoQueryRequest;
+import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoUpdateRequest;
+import com.dzapicommon.entity.service.model.entity.User;
+import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
 import com.yupi.project.annotation.AuthCheck;
-import com.yupi.project.common.BaseResponse;
-import com.yupi.project.common.DeleteRequest;
-import com.yupi.project.common.ErrorCode;
-import com.yupi.project.common.ResultUtils;
-import com.yupi.project.constant.CommonConstant;
 import com.yupi.project.constant.UserConstant;
 import com.yupi.project.exception.BusinessException;
-import com.yupi.project.model.dto.userinterfaceinfo.UserInterfaceInfoAddRequest;
-import com.yupi.project.model.dto.userinterfaceinfo.UserInterfaceInfoQueryRequest;
-import com.yupi.project.model.dto.userinterfaceinfo.UserInterfaceInfoUpdateRequest;
+import com.yupi.project.exception.ThrowUtils;
 import com.yupi.project.service.UserInterfaceInfoService;
 import com.yupi.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -167,34 +166,23 @@ public class UserInterfaceInfoController {
     }
 
     /**
-     * 分页获取列表
+     * 分页获取列表（封装类）
      *
      * @param userInterfaceInfoQueryRequest
      * @param request
      * @return
      */
-    @GetMapping("/list/page")
+    @PostMapping("/list/page/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<UserInterfaceInfo>> listUserInterfaceInfoByPage(UserInterfaceInfoQueryRequest userInterfaceInfoQueryRequest, HttpServletRequest request) {
-        if (userInterfaceInfoQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        UserInterfaceInfo userInterfaceInfoQuery = new UserInterfaceInfo();
-        BeanUtils.copyProperties(userInterfaceInfoQueryRequest, userInterfaceInfoQuery);
+    public BaseResponse<Page<UserInterfaceInfo>> listUserInterfaceInfoVOByPage(@RequestBody UserInterfaceInfoQueryRequest userInterfaceInfoQueryRequest,
+                                                                               HttpServletRequest request) {
         long current = userInterfaceInfoQueryRequest.getCurrent();
         long size = userInterfaceInfoQueryRequest.getPageSize();
-        String sortField = userInterfaceInfoQueryRequest.getSortField();
-        String sortOrder = userInterfaceInfoQueryRequest.getSortOrder();
         // 限制爬虫
-        if (size > 50) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        QueryWrapper<UserInterfaceInfo> queryWrapper = new QueryWrapper<>(userInterfaceInfoQuery);
-
-        queryWrapper.orderBy(StringUtils.isNotBlank(sortField),
-                sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
-        Page<UserInterfaceInfo> userInterfaceInfoPage = userInterfaceInfoService.page(new Page<>(current, size), queryWrapper);
-        return ResultUtils.success(userInterfaceInfoPage);
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        Page<UserInterfaceInfo> userInterfaceInfoPage = userInterfaceInfoService.page(new Page<>(current, size),
+                userInterfaceInfoService.getQueryWrapper(userInterfaceInfoQueryRequest));
+        return ResultUtils.success(userInterfaceInfoService.getUserInterfaceInfoVOPage(userInterfaceInfoPage, request));
     }
 
     // endregion

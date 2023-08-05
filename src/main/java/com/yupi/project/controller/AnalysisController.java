@@ -2,16 +2,20 @@ package com.yupi.project.controller;
 
 import com.alibaba.nacos.client.naming.utils.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.dzapicommon.entity.model.entity.InterfaceInfo;
-import com.dzapicommon.entity.model.entity.UserInterfaceInfo;
+
+import com.dzapicommon.common.BaseResponse;
+import com.dzapicommon.common.ErrorCode;
+import com.dzapicommon.common.ResultUtils;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
+import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
+import com.dzapicommon.entity.service.model.vo.InterfaceInfoVO;
 import com.yupi.project.annotation.AuthCheck;
-import com.yupi.project.common.BaseResponse;
-import com.yupi.project.common.ErrorCode;
-import com.yupi.project.common.ResultUtils;
+
 import com.yupi.project.exception.BusinessException;
 import com.yupi.project.mapper.UserInterfaceInfoMapper;
-import com.yupi.project.model.vo.InterfaceInfoVo;
+
 import com.yupi.project.service.InterfaceInfoService;
+import com.yupi.project.service.UserInterfaceInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,31 +39,37 @@ import java.util.stream.Collectors;
 public class AnalysisController {
 
     @Resource
-    private UserInterfaceInfoMapper userInterfaceInfoMapper;
+    private UserInterfaceInfoService userInterfaceInfoService;
 
     @Resource
     private InterfaceInfoService interfaceInfoService;
 
     @GetMapping("/top/interface/invoke")
     @AuthCheck(mustRole = "admin")
-    public BaseResponse<List<InterfaceInfoVo>> listTopInvokeInterfaceInfo() {
-        List<UserInterfaceInfo> userInterfaceInfoList = userInterfaceInfoMapper.listTopInvokeInterfaceInfo(3);
+    public BaseResponse<List<InterfaceInfoVO>> listTopInvokeInterfaceInfo() {
+        // 查询调用次数前3名的接口
+        List<UserInterfaceInfo> userInterfaceInfoList = userInterfaceInfoService.listTopInvokeInterfaceInfo(3);
+        if (userInterfaceInfoList.isEmpty()) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口信息不存在");
+        }
+        // 根据接口id分组
         Map<Long, List<UserInterfaceInfo>> interfaceInfoIdObjMap = userInterfaceInfoList.stream()
                 .collect(Collectors.groupingBy(UserInterfaceInfo::getInterfaceInfoId));
-        QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.in("id", interfaceInfoIdObjMap.keySet());
-        List<InterfaceInfo> list = interfaceInfoService.list(queryWrapper);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        // 查询所有接口id的接口信息
+        List<InterfaceInfo> list = interfaceInfoService.lambdaQuery()
+                .in(InterfaceInfo::getId, interfaceInfoIdObjMap.keySet())
+                .list();
+        if (list.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口信息不存在");
         }
-        List<InterfaceInfoVo> interfaceInfoVOList = list.stream().map(interfaceInfo -> {
-            InterfaceInfoVo interfaceInfoVO = new InterfaceInfoVo();
-            BeanUtils.copyProperties(interfaceInfo, interfaceInfoVO);
-            int totalNum = interfaceInfoIdObjMap.get(interfaceInfo.getId()).get(0).getTotalNum();
-            interfaceInfoVO.setTotalNum(totalNum);
+        // 组装返回结果
+        List<InterfaceInfoVO> result = list.stream().map(interfaceInfo -> {
+            InterfaceInfoVO interfaceInfoVO = InterfaceInfoVO.objToVo(interfaceInfo);
+            interfaceInfoVO.setTotalNum(interfaceInfoIdObjMap.get(interfaceInfo.getId()).get(0).getTotalNum());
             return interfaceInfoVO;
         }).collect(Collectors.toList());
-        return ResultUtils.success(interfaceInfoVOList);
+        return ResultUtils.success(result);
     }
+
 }
 

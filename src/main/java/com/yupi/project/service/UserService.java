@@ -1,11 +1,16 @@
 package com.yupi.project.service;
 
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.dzapicommon.entity.model.entity.User;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.dzapicommon.entity.service.model.dto.user.UserQueryRequest;
+import com.dzapicommon.entity.service.model.entity.User;
+import com.dzapicommon.entity.service.model.vo.LoginUserVO;
+import com.dzapicommon.entity.service.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 用户服务
@@ -32,7 +37,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return 脱敏后的用户信息
      */
-    User userLogin(String userAccount, String userPassword, HttpServletRequest request);
+    LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
      * 获取当前登录用户
@@ -57,4 +62,45 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 获取脱敏的已登录用户信息
+     *
+     * @return
+     */
+    LoginUserVO getLoginUserVO(User user);
+
+    /**
+     * 获取脱敏的用户信息
+     *
+     * @param user
+     * @return
+     */
+    UserVO getUserVO(User user);
+
+
+    /**
+     * 获取脱敏的用户信息
+     *
+     * @param userList
+     * @return
+     */
+    List<UserVO> getUserVO(List<User> userList);
+
+
+    /**
+     * 获取查询条件
+     *
+     * @param userQueryRequest
+     * @return
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+
+    /**
+     * 更新 secretKey
+     * @param id 用户id
+     * @return boolean
+     */
+    boolean updateSecretKey(Long id);
 }
