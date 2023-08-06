@@ -1,12 +1,11 @@
 package com.yupi.project.controller;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dazhou.dazhouclientsdk.client.RzApiClient;
 import com.dzapicommon.common.*;
-
+import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoAddRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoExecuteRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
@@ -15,13 +14,9 @@ import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.dzapicommon.entity.service.model.entity.User;
 import com.dzapicommon.entity.service.model.enums.InterfaceInfoStatusEnum;
 import com.dzapicommon.entity.service.model.vo.InterfaceInfoVO;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.yupi.project.annotation.AuthCheck;
-
 import com.yupi.project.constant.CommonConstant;
 import com.yupi.project.exception.BusinessException;
-
 import com.yupi.project.exception.ThrowUtils;
 import com.yupi.project.service.InterfaceInfoService;
 import com.yupi.project.service.UserService;
@@ -51,6 +46,8 @@ public class InterfaceInfoController {
     @Resource
     private RzApiClient rzApiClient;
 
+    @Resource
+    private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
 
     /**
      * 创建
@@ -247,8 +244,10 @@ public class InterfaceInfoController {
         // 判断接口是否存在
         Long id = interfaceInfoInvokeRequest.getId();
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
-        ThrowUtils.throwIf(oldInterfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
-        // 判断是否可以调用
+        if(oldInterfaceInfo==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"接口不存在");
+        }
+
         String requestParams = interfaceInfoInvokeRequest.getRequestParams();
         // 接口请求地址
         String url = oldInterfaceInfo.getUrl();
@@ -260,8 +259,9 @@ public class InterfaceInfoController {
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
         RzApiClient rzApiClient = new RzApiClient(accessKey, secretKey);
-        rzApiClient.setGatewayHost(host);
         // 设置网关地址
+        rzApiClient.setGatewayHost(host);
+        // 判断是否可以调用
         try {
             // 执行方法
             String invokeResult = rzApiClient.executeApi(requestParams, url, method);
@@ -352,6 +352,10 @@ public class InterfaceInfoController {
         String result = tempClient.executeApi(userRequestParams,url,method);
         if (result==null){
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"接口参数不对调用失败");
+        }
+        //不经过网关的在这里调用次数就+1
+        if (!host.equals("http://localhost:8090")){
+            innerUserInterfaceInfoService.invokeCount(oldInterfaceInfo.getId(),loginUser.getId());
         }
         return ResultUtils.success(result);
     }

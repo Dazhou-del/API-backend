@@ -27,6 +27,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +58,16 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         //1. 用户发起请求到API网关  已经实现
         //2. 请求日志
         ServerHttpRequest request = exchange.getRequest();
-        String path = INTERFACE_HOST+request.getPath().value();
+        //路径
+        String url = request.getPath().value();
+        URI uri = request.getURI();
+        String s = uri.getHost().toString();
+        int port = uri.getPort();
+        //http
+        String scheme = uri.getScheme();
+//        协议+ip+端口号
+        String host=scheme+"://"+s+":"+port;
+        String path = host+url;
         String method = request.getMethod().toString();
         log.info("请求唯一标识: " + request.getId());
         log.info("请求路径: " + path);
@@ -88,7 +98,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (invokeUser==null){
             return handleNotAuth(response);
         }
-
+        //设置随机数
         if (Long.parseLong(nonce) > 100000000) {
             return handleNotAuth(response);
         }
@@ -108,7 +118,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         //5. 请求的模拟接口是否存在 模拟接口是否存在，以及请求方法是否匹配，(还可以校验请求参数)
         InterfaceInfo interfaceInfo=null;
         try {
-            interfaceInfo=innerInterfaceInfoService.getInterfaceInfo(path, method);
+            interfaceInfo=innerInterfaceInfoService.getInterfaceInfo(host,url, method);
         }catch (Exception e){
             log.error("interfaceInfo error",e);
         }

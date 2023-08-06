@@ -1,5 +1,9 @@
 package com.dazhou.dzapiinterface.controller;
 
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.URLUtil;
+import com.codeinchinese.英汉词典.英汉词典;
+import com.codeinchinese.英汉词典.词条;
 import com.dazhou.dazhouclientsdk.model.User;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,22 +15,20 @@ import javax.servlet.http.HttpServletRequest;
  * @author JinZe
  */
 @RestController
-@RequestMapping("/name")
+@RequestMapping("/api/name")
 public class NameController {
 
-    @GetMapping("/get")
-    public String getNameByGet(String name) {
-        return "Get 你的名字是"+name;
-    }
-
-    @PostMapping("/post")
-    public String getNameByPost(@RequestParam String name) {
-        return "Post 你的名字是"+name;
-    }
 
     @PostMapping("/user")
-    public String getUsernameByPost(@RequestBody User user ) {
-        String result="Post 用户名字是"+user.getUsername();
-        return result;
+    public String getUsernameByPost(HttpServletRequest request ) {
+        String body = URLUtil.decode(request.getHeader("body"), CharsetUtil.CHARSET_UTF_8);
+        String string = null;
+        try {
+            string = 英汉词典.查词(body).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "单词有误";
+        }
+        return string;
     }
 }

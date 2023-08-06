@@ -23,12 +23,14 @@ public class InnerInterfaceInfoServiceImpl implements InnerInterfaceInfoService 
     private InterfaceInfoMapper interfaceInfoMapper;
     //2.从数据库中查询模拟接口，是否存在(请求路径，请求方法，请求参数，布尔)
     @Override
-    public InterfaceInfo getInterfaceInfo(String path, String method) {
-        if (StringUtils.isAnyBlank(path,method)){
+    public InterfaceInfo getInterfaceInfo(String host,String url, String method) {
+        if (StringUtils.isAnyBlank(host,url,method)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+
         QueryWrapper<InterfaceInfo> queryWrapper=new QueryWrapper<>();
-        queryWrapper.eq("url",path);
+        queryWrapper.eq("url",url);
+        queryWrapper.eq("host",host);
         queryWrapper.eq("method",method);
         InterfaceInfo interfaceInfo = interfaceInfoMapper.selectOne(queryWrapper);
         return interfaceInfo;

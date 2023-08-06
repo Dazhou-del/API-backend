@@ -9,12 +9,14 @@ import com.dzapicommon.common.ResultUtils;
 import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoAddRequest;
 import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoQueryRequest;
 import com.dzapicommon.entity.service.model.dto.userinterfaceinfo.UserInterfaceInfoUpdateRequest;
+import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.dzapicommon.entity.service.model.entity.User;
 import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
 import com.yupi.project.annotation.AuthCheck;
 import com.yupi.project.constant.UserConstant;
 import com.yupi.project.exception.BusinessException;
 import com.yupi.project.exception.ThrowUtils;
+import com.yupi.project.service.InterfaceInfoService;
 import com.yupi.project.service.UserInterfaceInfoService;
 import com.yupi.project.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,27 +43,38 @@ public class UserInterfaceInfoController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private InterfaceInfoService interfaceInfoService;
+
     // region 增删改查
 
     /**
-     * 创建
+     * 开通接口
      *
      * @param userInterfaceInfoAddRequest
      * @param request
      * @return
      */
     @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addUserInterfaceInfo(@RequestBody UserInterfaceInfoAddRequest userInterfaceInfoAddRequest, HttpServletRequest request) {
         if (userInterfaceInfoAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         UserInterfaceInfo userInterfaceInfo = new UserInterfaceInfo();
         BeanUtils.copyProperties(userInterfaceInfoAddRequest, userInterfaceInfo);
+        Long interfaceInfoId = userInterfaceInfo.getInterfaceInfoId();
         // 校验
-        userInterfaceInfoService.validUserInterfaceInfo(userInterfaceInfo, true);
+        if (interfaceInfoId<0){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"接口不存在");
+        }
+        //看接口状态是否开启
+        Boolean  checkResult=interfaceInfoService.checkInterfaceStatus(interfaceInfoId);
         User loginUser = userService.getLoginUser(request);
         userInterfaceInfo.setUserId(loginUser.getId());
+        //设置次数和状态
+        userInterfaceInfo.setLeftNum(99999);
+        userInterfaceInfo.setTotalNum(0);
         boolean result = userInterfaceInfoService.save(userInterfaceInfo);
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);

@@ -71,4 +71,11 @@ public interface InterfaceInfoService extends IService<InterfaceInfo> {
      * @return 接口信息分页
      */
     Page<InterfaceInfoVO> getInterfaceInfoVOByUserIdPage(Page<InterfaceInfo> interfaceInfoPage, HttpServletRequest request);
+
+    /**
+     * 检查接口状态是否开启
+     * @param interfaceInfoId
+     * @return
+     */
+    Boolean checkInterfaceStatus(Long interfaceInfoId);
 }

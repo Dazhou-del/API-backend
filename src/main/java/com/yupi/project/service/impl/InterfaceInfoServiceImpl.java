@@ -160,6 +160,12 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
         return interfaceInfoVO;
     }
 
+    /**
+     * 分页查询接口
+     * @param interfaceInfoPage
+     * @param request
+     * @return
+     */
     @Override
     public Page<InterfaceInfoVO> getInterfaceInfoVOPage(Page<InterfaceInfo> interfaceInfoPage, HttpServletRequest request) {
         List<InterfaceInfo> interfaceInfoList = interfaceInfoPage.getRecords();
@@ -234,6 +240,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
                             .eq(UserInterfaceInfo::getUserId, userId)
                             .eq(UserInterfaceInfo::getInterfaceInfoId, interfaceInfo.getId())
                             .one();
+//                            .one();
                     if (userInterfaceInfo != null) {
                         interfaceInfoVO.setTotalNum(userInterfaceInfo.getTotalNum());
                         interfaceInfoVO.setLeftNum(userInterfaceInfo.getLeftNum());
@@ -253,6 +260,17 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
 
         interfaceInfoVOPage.setRecords(interfaceInfoVOList);
         return interfaceInfoVOPage;
+    }
+
+    //检查接口状态是否开启
+    @Override
+    public Boolean checkInterfaceStatus(Long interfaceInfoId) {
+        InterfaceInfo interfaceInfo = this.getById(interfaceInfoId);
+        Integer status = interfaceInfo.getStatus();
+        if (status==0){
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"该接口未开启");
+        }
+        return true;
     }
 
     /**
