@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 /**
  * id请求
- *
  */
 @Data
 public class IdRequest implements Serializable {

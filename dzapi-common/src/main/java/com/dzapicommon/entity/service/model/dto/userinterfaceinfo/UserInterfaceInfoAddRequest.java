@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 /**
  * 创建请求
- *
  */
 @Data
 public class UserInterfaceInfoAddRequest implements Serializable {

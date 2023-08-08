@@ -1,8 +1,8 @@
 package com.dzapicommon.common;
 
+
 /**
- * 自定义错误码
- *
+ * 自定义错误
  */
 public enum ErrorCode {
 

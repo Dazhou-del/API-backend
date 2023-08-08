@@ -1,7 +1,6 @@
 package com.dazhou.dzapigateway.filter;
 
 import com.dazhou.dazhouclientsdk.util.SignUtils;
-
 import com.dzapicommon.entity.service.InnerInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserService;
@@ -9,6 +8,7 @@ import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.dzapicommon.entity.service.model.entity.User;
 import com.dzapicommon.entity.service.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.reactivestreams.Publisher;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -17,6 +17,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -27,11 +28,13 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resource;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 全局过滤
@@ -51,7 +54,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
 
     public static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
 
-    public static final String INTERFACE_HOST="http://localhost:8123";
+    //    public static final String INTERFACE_HOST="http://localhost:8123";
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -66,8 +71,8 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         //http
         String scheme = uri.getScheme();
 //        协议+ip+端口号
-        String host=scheme+"://"+s+":"+port;
-        String path = host+url;
+        String host = scheme + "://" + s + ":" + port;
+        String path = host + url;
         String method = request.getMethod().toString();
         log.info("请求唯一标识: " + request.getId());
         log.info("请求路径: " + path);
@@ -83,22 +88,31 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         }
         //4. 用户鉴权（判断ak, sk是否合法）
         HttpHeaders headers = request.getHeaders();
+
         String accessKey = headers.getFirst("accessKey");
         String nonce = headers.getFirst("nonce");
         String timestamp = headers.getFirst("timestamp");
         String sign = headers.getFirst("sign");
         String body = headers.getFirst("body");
         // 实际情况应该是去数据库中查是否已经分配给用户
-        User invokeUser=null;
+        User invokeUser = null;
         try {
-            invokeUser=innerUserService.getInvokeUser(accessKey);
-        }catch (Exception e){
-            log.error("getInvokeUser error",e);
+            invokeUser = innerUserService.getInvokeUser(accessKey);
+        } catch (Exception e) {
+            log.error("getInvokeUser error", e);
         }
-        if (invokeUser==null){
+        if (invokeUser == null) {
             return handleNotAuth(response);
         }
-        //设置随机数
+        if (StringUtils.isEmpty(nonce) || StringUtils.isEmpty(sign)
+                || StringUtils.isEmpty(timestamp) || StringUtils.isEmpty(method)) {
+            return handleNotAuth(response);
+        }
+        //禁止重发攻击
+        String redisNonce = (String) redisTemplate.opsForValue().get(nonce);
+        if (!StringUtils.isEmpty(redisNonce)) {
+            return handleNotAuth(response);
+        }
         if (Long.parseLong(nonce) > 100000000) {
             return handleNotAuth(response);
         }
@@ -112,17 +126,17 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         // 实际情况应该是去数据库中查出 secretKey
         String secretKey = invokeUser.getSecretKey();
         String serveSign = SignUtils.getSign(body, secretKey);
-        if (sign==null || !sign.equals(serveSign)) {
+        if (sign == null || !sign.equals(serveSign)) {
             return handleNotAuth(response);
         }
         //5. 请求的模拟接口是否存在 模拟接口是否存在，以及请求方法是否匹配，(还可以校验请求参数)
-        InterfaceInfo interfaceInfo=null;
+        InterfaceInfo interfaceInfo = null;
         try {
-            interfaceInfo=innerInterfaceInfoService.getInterfaceInfo(host,url, method);
-        }catch (Exception e){
-            log.error("interfaceInfo error",e);
+            interfaceInfo = innerInterfaceInfoService.getInterfaceInfo(host, url, method);
+        } catch (Exception e) {
+            log.error("interfaceInfo error", e);
         }
-        if (interfaceInfo==null){
+        if (interfaceInfo == null) {
             return handleNotAuth(response);
         }
         // 是否还有调用次数
@@ -130,15 +144,14 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         Long userId = invokeUser.getId();
         UserInterfaceInfo userInterfaceInfo = innerUserInterfaceInfoService.getLeftNum(interfaceInfoId, userId);
         Integer leftNum = userInterfaceInfo.getLeftNum();
-        if (leftNum.intValue()<=0){
+        if (leftNum.intValue() <= 0) {
             log.error("没有调用次数了");
             return response.setComplete();
         }
         //7.请求转发，调用模拟接口+响应日志
-        return handleResponse(exchange, chain,interfaceInfoId,userId);
+        return handleResponse(exchange, chain, interfaceInfoId, userId);
 
     }
-
 
 
     /**
@@ -171,6 +184,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                                         // 7. 调用成功，接口调用次数 + 1 invokeCount
                                         try {
                                             innerUserInterfaceInfoService.invokeCount(interfaceInfoId, userId);
+                                            ServerHttpRequest request = exchange.getRequest();
+                                            String nonce = request.getHeaders().getFirst("nonce");
+                                            redisTemplate.opsForValue().set(nonce, 1, 5, TimeUnit.MINUTES);
                                         } catch (Exception e) {
                                             log.error("invokeCount error", e);
                                         }
@@ -195,7 +211,11 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                     }
                 };
                 // 设置 response 对象为装饰过的
-                return chain.filter(exchange.mutate().response(decoratedResponse).build());
+                // 流量染色，只有染色数据才能被调用
+                ServerHttpRequest httpRequest = exchange.getRequest().mutate()
+                        .header("ranse", "dazhou").build();
+                return chain.filter(exchange.mutate().request(httpRequest)
+                        .response(decoratedResponse).build());
             }
             return chain.filter(exchange); // 降级处理返回数据
         } catch (Exception e) {
@@ -203,10 +223,12 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
     }
+
     @Override
     public int getOrder() {
         return -1;
     }
+
 
     //公共方法没有权限
     public Mono<Void> handleNotAuth(ServerHttpResponse response) {
@@ -214,9 +236,5 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         return response.setComplete();
     }
 
-    //500  调用失败，返回一个规范的错误码
-    public Mono<Void> handleInvokeError(ServerHttpResponse response) {
-        response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-        return response.setComplete();
-    }
+
 }

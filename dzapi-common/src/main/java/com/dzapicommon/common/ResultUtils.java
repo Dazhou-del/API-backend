@@ -47,7 +47,7 @@ public class ResultUtils {
     }
 
     public static <T> BaseResponse<T> dataOk(T data) {
-        return new BaseResponse<T>(0 , data,"success");
+        return new BaseResponse<T>(0, data, "success");
     }
 
 

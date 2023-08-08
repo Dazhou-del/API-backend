@@ -19,6 +19,10 @@ spring:
     port: 6379
     host: localhost
     database: 0
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 server:
   port: 7529
   servlet:
@@ -44,4 +48,10 @@ dubbo:
     port: -1
   registry:
     address: nacos://127.0.0.1:8848
+oss:
+  accessKey: LTAI5tGBPNsnGPrFm1FbfMwW
+  secret: DyughXRNJ1ryyzCQNjEVRORI2WoYku
+  endpoint: oss-cn-guangzhou.aliyuncs.com
+  bucketName: dazhou123
+  url: https://dazhou123.oss-cn-guangzhou.aliyuncs.com/
 
