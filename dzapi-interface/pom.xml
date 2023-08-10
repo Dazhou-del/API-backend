@@ -22,12 +22,8 @@
             <artifactId>dzapi-common</artifactId>
             <version>1.0</version>
         </dependency>
-<!--        翻译器-->
-        <dependency>
-            <groupId>com.codeinchinese</groupId>
-            <artifactId>english-chinese-dictionary</artifactId>
-            <version>0.0.1</version>
-        </dependency>
+
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

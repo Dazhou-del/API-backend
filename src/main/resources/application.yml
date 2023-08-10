@@ -47,7 +47,7 @@ dubbo:
     name: dubbo
     port: -1
   registry:
-    address: nacos://127.0.0.1:8848
+    address: nacos://43.136.14.135:8848
 oss:
   accessKey: LTAI5tGBPNsnGPrFm1FbfMwW
   secret: DyughXRNJ1ryyzCQNjEVRORI2WoYku

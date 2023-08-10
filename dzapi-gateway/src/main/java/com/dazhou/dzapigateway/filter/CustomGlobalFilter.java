@@ -52,9 +52,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
     @DubboReference
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
 
-    public static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
+//    public static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
 
-    //    public static final String INTERFACE_HOST="http://localhost:8123";
+//        public static final String INTERFACE_HOST="http://localhost:8123";
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -83,9 +83,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         log.info("请求来源地址: " + request.getRemoteAddress());
         ServerHttpResponse response = exchange.getResponse();
         //3.（黑白名单） 如果来源的地址不在白名单中，就返回一个状态码
-        if (!IP_WHITE_LIST.contains(sourceAddress)) {
-            return handleNotAuth(response);
-        }
+//        if (!IP_WHITE_LIST.contains(sourceAddress)) {
+//            return handleNotAuth(response);
+//        }
         //4. 用户鉴权（判断ak, sk是否合法）
         HttpHeaders headers = request.getHeaders();
 
@@ -139,6 +139,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         if (interfaceInfo == null) {
             return handleNotAuth(response);
         }
+        log.info("到查看是否还要调用次数");
         // 是否还有调用次数
         Long interfaceInfoId = interfaceInfo.getId();
         Long userId = invokeUser.getId();
@@ -183,7 +184,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                                     fluxBody.map(dataBuffer -> {
                                         // 7. 调用成功，接口调用次数 + 1 invokeCount
                                         try {
+
                                             innerUserInterfaceInfoService.invokeCount(interfaceInfoId, userId);
+                                            log.info("接口调查次+1后");
                                             ServerHttpRequest request = exchange.getRequest();
                                             String nonce = request.getHeaders().getFirst("nonce");
                                             redisTemplate.opsForValue().set(nonce, 1, 5, TimeUnit.MINUTES);

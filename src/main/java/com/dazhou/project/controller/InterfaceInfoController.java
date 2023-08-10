@@ -350,17 +350,9 @@ public class InterfaceInfoController {
         tempClient.setGatewayHost(host);
         //调用客户端
         String result = null;
-        try {
-            result = tempClient.executeApi(userRequestParams,url,method);
-            if (StringUtils.isBlank(result)){
+        result = tempClient.executeApi(userRequestParams,url,method);
+        if (StringUtils.isBlank(result)){
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口数据为空");
-            }
-            if(result.contains("Error")){
-                return ResultUtils.error(4000,"输入参数错误请重新输入");
-            }
-        } catch (Exception e) {
-
-//            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口验证失败");
         }
         //不经过网关的在这里调用次数就+1
         if (!host.equals("http://localhost:8090")){

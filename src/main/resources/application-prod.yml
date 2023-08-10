@@ -1,6 +1,23 @@
+# 线上配置文件
+server:
+  port: 7529
 spring:
+  # 数据库配置
+  # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
+    url: jdbc:mysql://43.136.14.135:3306/dazhou
     username: root
-    password: 123456
+    password: dazhou520
+  # Redis 配置
+  # todo 需替换配置
+  redis:
+    database: 1
+    host: 127.0.0.1
+    port: 6379
+    timeout: 5000
+  #    password:
+mybatis-plus:
+  configuration:
+    # 生产环境关闭日志
+    log-impl: ''
