@@ -1,6 +1,7 @@
 package com.dazhou.dzapigateway.filter;
 
 import com.dazhou.dazhouclientsdk.util.SignUtils;
+import com.dzapicommon.common.ErrorCode;
 import com.dzapicommon.entity.service.InnerInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserInterfaceInfoService;
 import com.dzapicommon.entity.service.InnerUserService;
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,7 +51,8 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
     private InnerInterfaceInfoService innerInterfaceInfoService;
     @DubboReference
     private InnerUserService innerUserService;
-    @DubboReference
+    //设置超时时间，设置重试次数。
+    @DubboReference(check = false,timeout = 3000,retries = 3)
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
 
 //    public static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
@@ -239,5 +242,42 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         return response.setComplete();
     }
 
+
+//    使用Redisson分布式锁来实现操作互斥。用方法名+用户id上锁。
+    /*private void postHandler(ServerHttpRequest request, ServerHttpResponse response, Long interfaceInfoId, Long userId) {
+        RLock lock = redissonClient.getLock("api:add_interface_num:" + userId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            CompletableFuture.runAsync(() -> {
+                if (lock.tryLock()) {
+                    try {
+                        addInterfaceNum(request, interfaceInfoId, userId);
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            });
+        }
+    }*/
+
+    /*private void addInterfaceNum(ServerHttpRequest request, Long interfaceInfoId, Long userId) {
+        String nonce = request.getHeaders().getFirst("nonce");
+        if (StringUtil.isEmpty(nonce)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "请求重复");
+        }
+        UserInterfaceInfo userInterfaceInfo = innerUserInterfaceInfoService.hasLeftNum(interfaceInfoId, userId);
+        // 接口未绑定用户
+        if (userInterfaceInfo == null) {
+            Boolean save = innerUserInterfaceInfoService.addDefaultUserInterfaceInfo(interfaceInfoId, userId);
+            if (save == null || !save) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "接口绑定用户失败！");
+            }
+        }
+        if (userInterfaceInfo != null && userInterfaceInfo.getLeftNum() <= 0) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "调用次数已用完！");
+        }
+        redisTemplate.opsForValue().set(nonce, 1, 5, TimeUnit.MINUTES);
+        //调用成功，接口调用次数 + 1 invokeCount
+        innerUserInterfaceInfoService.invokeCount(interfaceInfoId, userId);
+    }*/
 
 }

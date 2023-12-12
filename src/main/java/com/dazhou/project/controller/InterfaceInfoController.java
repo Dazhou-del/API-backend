@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dazhou.dazhouclientsdk.client.RzApiClient;
 import com.dazhou.project.exception.BusinessException;
+import com.dazhou.project.service.GoodsService;
 import com.dazhou.project.service.InterfaceInfoService;
 import com.dazhou.project.service.UserService;
 import com.dzapicommon.common.*;
@@ -13,6 +14,7 @@ import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoAddRe
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoExecuteRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoQueryRequest;
 import com.dzapicommon.entity.service.model.dto.interfaceinfo.InterfaceInfoUpdateRequest;
+import com.dzapicommon.entity.service.model.entity.Goods;
 import com.dzapicommon.entity.service.model.entity.InterfaceInfo;
 import com.dzapicommon.entity.service.model.entity.User;
 import com.dzapicommon.entity.service.model.enums.InterfaceInfoStatusEnum;
@@ -38,6 +40,8 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 public class InterfaceInfoController {
 
+    public static final double GOODS_PRICE = 10.0;
+    public static final int STORE = 99999999;
     @Resource
     private InterfaceInfoService interfaceInfoService;
 
@@ -45,6 +49,9 @@ public class InterfaceInfoController {
     private UserService userService;
     @Resource
     private RzApiClient rzApiClient;
+
+    @Resource
+    private GoodsService goodsService;
 
     @Resource
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
@@ -71,6 +78,14 @@ public class InterfaceInfoController {
         interfaceInfo.setRequestParamsRemark(JSONUtil.toJsonStr(interfaceInfoAddRequest.getRequestParamsRemark()));
         interfaceInfo.setResponseParamsRemark(JSONUtil.toJsonStr(interfaceInfoAddRequest.getResponseParamsRemark()));
         boolean result = interfaceInfoService.save(interfaceInfo);
+        //保存在商品表中
+        Goods goods = new Goods();
+        goods.setGoods_id(interfaceInfo.getId());
+        goods.setGoods_name(interfaceInfo.getName());
+        goods.setGoods_price(GOODS_PRICE);
+        goods.setUnit("次");
+        goods.setStore(STORE);
+        goodsService.save(goods);
         if (!result) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR);
         }
@@ -313,7 +328,7 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 参数调用
+     * 调用API
      * 只有管理才能操作
      * @param interfaceInfoInvokeRequest
      * @param request

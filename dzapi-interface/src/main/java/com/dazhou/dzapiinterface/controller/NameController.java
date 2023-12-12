@@ -20,9 +20,20 @@ public class NameController {
 
 
     @PostMapping("/user")
-    public String getUsernameByPost(HttpServletRequest request, HttpServletResponse response){
+    public String getUsernameByPost(HttpServletRequest request, HttpServletResponse response) {
         String body = URLUtil.decode(request.getHeader("body"), CharsetUtil.CHARSET_UTF_8);
-
-        return body;
+//
+//        return body;
+        if (body.equals(body.toLowerCase())) {
+            // 字符串是小写，转换为大写
+            body = body.toUpperCase();
+            return body;
+        } else if (body.equals(body.toUpperCase())) {
+            // 字符串是大写，转换为小写
+            body = body.toLowerCase();
+            return body;
+        } else {
+            return null;
+        }
     }
 }

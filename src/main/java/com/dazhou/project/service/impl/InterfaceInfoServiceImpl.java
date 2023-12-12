@@ -28,6 +28,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,6 +57,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
      * @param interfaceInfo
      * @param add
      */
+
     @Override
     public void validInterfaceInfo(InterfaceInfo interfaceInfo, boolean add) {
         if (interfaceInfo == null) {
@@ -239,8 +241,9 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
                     UserInterfaceInfo userInterfaceInfo = userInterfaceInfoService.lambdaQuery()
                             .eq(UserInterfaceInfo::getUserId, userId)
                             .eq(UserInterfaceInfo::getInterfaceInfoId, interfaceInfo.getId())
-                            .one();
 //                            .one();
+                            .one();
+
                     if (userInterfaceInfo != null) {
                         interfaceInfoVO.setTotalNum(userInterfaceInfo.getTotalNum());
                         interfaceInfoVO.setLeftNum(userInterfaceInfo.getLeftNum());
