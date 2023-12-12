@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dazhou.project.mapper.OrderGoodMapper">
+
+    <resultMap id="BaseResultMap" type="com.dzapicommon.entity.service.model.entity.OrderGood">
+            <id property="goodsId" column="order_id" jdbcType="BIGINT"/>
+            <id property="goodsId" column="goods_id" jdbcType="BIGINT"/>
+            <result property="goodsName" column="goods_name" jdbcType="VARCHAR"/>
+            <result property="goodsNumber" column="goods_number" jdbcType="INTEGER"/>
+            <result property="goodsPrice" column="goods_price" jdbcType="INTEGER"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        order_id,goods_id,goods_name,
+        goods_number,goods_price,createTime,
+        updateTime,isDelete
+    </sql>
+</mapper>
