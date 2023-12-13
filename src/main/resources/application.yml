@@ -5,8 +5,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/dazhou?useSSL=FALSE&serverTimezone=UTC
-    username: root
-    password: dazhou520
+    username: xxx
+    password: xxx
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
